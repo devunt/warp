@@ -181,7 +181,8 @@ class Server(object):
             th = WorkerThread(i + 1, self.q)
             th.daemon = True
             th.start()
-            sleep(0.01)
+            if flag:
+                sleep(0.01)
         self.sc = socket(AF_INET, SOCK_STREAM)
         self.sc.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         try:
@@ -189,7 +190,7 @@ class Server(object):
         except error as e:
             log(ERROR, '!!! Fail to bind server at [%s:%d]: %s' % (self.hostname, self.port, e.args[1]))
             return
-        log(INFO, 'Server binded at [%s:%d]. Listen.' % (self.hostname, self.port))
+        log(INFO, 'Server binded at [%s:%d]. Listen with %d threads.' % (self.hostname, self.port, self.count))
         self.sc.listen(10)
 
         while True:

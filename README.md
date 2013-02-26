@@ -1,7 +1,7 @@
 WARP
 ====
 
-Simple http transparent proxy made in python
+Simple http transparent proxy made in python 2.7.3
 
 ## How to use
 1. run with python interpreter
