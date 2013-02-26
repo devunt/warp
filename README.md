@@ -5,9 +5,11 @@ Simple http transparent proxy made in python
 
 ## How to use
 1. run with python interpreter
+
 $ python warp.py
 
 2. set browser's proxy setting to 
+
  [http proxy] host: 127.0.0.1 / port: 8800
 
 3. PROFIT!
