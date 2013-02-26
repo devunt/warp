@@ -6,7 +6,7 @@ Simple http transparent proxy made in python
 ## How to use
 1. run with python interpreter
 
- $ python warp.py
+        $ python warp.py -p8800
 
 2. set browser's proxy setting to 
 
