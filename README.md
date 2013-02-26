@@ -6,13 +6,16 @@ Simple http transparent proxy made in python
 ## How to use
 1. run with python interpreter
 
-$ python warp.py
+ $ python warp.py
 
 2. set browser's proxy setting to 
 
  [http proxy] host: 127.0.0.1 / port: 8800
 
 3. PROFIT!
+
+## License
+MIT License (include in warp.py)
 
 ## 면책조항
 WARP를 사용함으로써 생기는 모든 책임은 사용자에게 있습니다.
