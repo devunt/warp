@@ -34,6 +34,7 @@ from socket import (AF_INET, IPPROTO_TCP, SO_REUSEADDR, SOCK_STREAM,
                     SOL_SOCKET, TCP_NODELAY, socket)
 from re import compile
 from time import sleep
+from optparse import OptionParser
 
 REGEX_HOST = compile(r'(^:+):([0-9]{1,5})')
 REGEX_CONTENT_LENGTH = compile(r'$Content-Length: ([0-9]+)^')
@@ -168,9 +169,25 @@ class Server(object):
         while True:
             self.q.put(self.sc.accept())
 
-if __name__ == '__main__':
-    server = Server('127.0.0.1', 8800)
+
+def main():
+    """CLI frontend function.  It takes command line options e.g. host,
+    port and provides ``--help`` message.
+
+    """
+    parser = OptionParser(description='Simple HTTP transparent proxy',
+                          version=VERSION)
+    parser.add_option('-H', '--host', default='127.0.0.1',
+                      help='Host to listen [%default]')
+    parser.add_option('-p', '--port', type='int', default=8800,
+                      help='Port to listen [%default]')
+    options, args = parser.parse_args()
+    server = Server(options.host, options.port)
     try:
         server.start()
     except KeyboardInterrupt:
         print 'bye'
+
+
+if __name__ == '__main__':
+    main()
