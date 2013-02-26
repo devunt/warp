@@ -182,6 +182,8 @@ def main():
     parser.add_option('-p', '--port', type='int', default=8800,
                       help='Port to listen [%default]')
     options, args = parser.parse_args()
+    if not (0 <= options.port <= 65535):
+        parser.error('port must be 0-65535')
     server = Server(options.host, options.port)
     try:
         server.start()
