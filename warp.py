@@ -28,9 +28,10 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from threading import Thread, enumerate
+from threading import Thread
 from Queue import Queue
-from socket import *
+from socket import (AF_INET, IPPROTO_TCP, SO_REUSEADDR, SOCK_STREAM,
+                    SOL_SOCKET, TCP_NODELAY, socket)
 from re import compile
 from time import sleep
 
@@ -86,7 +87,6 @@ class WorkerThread(Thread):
                 return
             head = req[0].split(' ')
             phost = False
-            con = False
             sreq = []
             for line in req[1:]:
                 if "Host: " in line:
