@@ -47,17 +47,15 @@ REGEX_CONNECTION = compile(r'\r\nConnection: (.+)\r\n')
 
 
 class WorkerThread(Thread):
-    def __init__(self, n, q):
-        self.n = n
+    def __init__(self, q):
         self.q = q
         Thread.__init__(self)
-        logging.debug('Worker #%d init' % n)
 
     def run(self):
-        logging.debug('Worker #%d started' % self.n)
+        logging.debug('%s started' % self.name)
         while True:
             conn, addr = self.q.get(block=True)
-            logging.debug('Worker #%d: Accept new task' % self.n)
+            logging.debug('%s: Accept new task' % self.name)
             cont = ''
             try:
                 while True:
@@ -82,13 +80,13 @@ class WorkerThread(Thread):
             m = REGEX_PROXY_CONNECTION.search(cont)
             if not m:
                 self.q.task_done()
-                logging.debug('!!! Worker #%d: Task reject' % self.n)
+                logging.debug('!!! %s: Task reject' % self.name)
                 return
 
             req = cont.split('\r\n')
             if len(req) < 4:
                 self.q.task_done()
-                logging.debug('!!! Worker #%d: Task reject' % self.n)
+                logging.debug('!!! %s: Task reject' % self.name)
                 return
             head = req[0].split(' ')
             phost = False
@@ -108,7 +106,7 @@ class WorkerThread(Thread):
                 phost = '127.0.0.1'
             path = head[1][len(phost)+7:]
 
-            logging.debug('Worker #%d: Process - %s' % (self.n, req[0]))
+            logging.debug('%s: Process - %s' % (self.name, req[0]))
 
             new_head = ' '.join([head[0], path, head[2]])
 
@@ -149,7 +147,7 @@ class WorkerThread(Thread):
             req_sc.close()
             conn.close()
 
-            logging.debug('Worker #%d: Task done' % self.n)
+            logging.debug('%s: Task done' % self.name)
             self.q.task_done()
 
 
@@ -162,11 +160,10 @@ class Server(object):
 
     def start(self):
         for i in range(0, self.count):
-            th = WorkerThread(i + 1, self.q)
+            th = WorkerThread(self.q)
+            th.name = 'Worker #%d' % (i + 1)
             th.daemon = True
             th.start()
-            #if flag:
-            #    sleep(0.01)
         self.sc = socket(AF_INET, SOCK_STREAM)
         self.sc.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         try:
