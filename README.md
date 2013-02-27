@@ -12,7 +12,9 @@ Simple http transparent proxy made in python 2.7.3
 
  [http proxy] host: 127.0.0.1 / port: 8800
 
-3. PROFIT!
+3. ???
+
+4. PROFIT!
 
 ## License
 MIT License (include in warp.py)
