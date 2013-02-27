@@ -28,14 +28,12 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from gevent.monkey import patch_all; patch_all()
 from threading import Thread
 from Queue import Queue
 from socket import (AF_INET, IPPROTO_TCP, SO_REUSEADDR, SOCK_STREAM,
                     SOL_SOCKET, TCP_NODELAY, socket, error)
 from re import compile
-from time import sleep
-from sys import stdout, stderr
-from datetime import datetime
 from optparse import OptionParser
 import logging
 
@@ -117,6 +115,7 @@ class WorkerThread(Thread):
             else:
                 host = phost
                 port = 80
+                phost = "%s:80" % host
 
             try:
                 req_sc = socket(AF_INET, SOCK_STREAM)
@@ -200,7 +199,7 @@ def main():
         lv = logging.DEBUG
     else:
         lv = logging.INFO
-    logging.basicConfig(level=lv, format='%(asctime)s [%(levelname)s] %(message)s')
+    logging.basicConfig(level=lv, format='[%(asctime)s] {%(levelname)s} %(message)s')
     server = Server(options.host, options.port, options.count)
     try:
         server.start()
