@@ -1,12 +1,12 @@
 WARP
 ====
 
-Simple http transparent proxy made in python 2.7.3
+Simple http transparent proxy made in python 2.7.3 (can be run with pypy)
 
 ## How to use
 1. run with python interpreter
 
-        $ python warp.py -p8800
+        $ python warp.py
 
 2. set browser's proxy setting to 
 
@@ -16,11 +16,19 @@ Simple http transparent proxy made in python 2.7.3
 
 4. PROFIT!
 
+### Command help
+$ python warp.py --help
+
 ## License
 MIT License (include in warp.py)
 
 ## 면책조항
-WARP를 사용함으로써 생기는 모든 책임은 사용자에게 있습니다.
+1. WARP를 사용함으로써 생기는 모든 책임은 사용자에게 있습니다.
+2. WARP의 코드 기여자들은 사용에 관한 책임을 지지 않습니다.
 
 ## Notice
-1. may not work in some ISPs (will be fix in later)
+1. may not work in
+   * some ISPs
+   * some company firewalls
+   * some school firewalls
+   * some browers (will fix it later)
