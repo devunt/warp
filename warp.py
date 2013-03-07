@@ -34,6 +34,7 @@ from Queue import Queue
 from socket import (AF_INET, IPPROTO_TCP, SO_REUSEADDR, SOCK_STREAM,
                     SOL_SOCKET, TCP_NODELAY, socket, error)
 from re import compile
+from time import sleep
 from optparse import OptionParser
 import logging
 
@@ -122,6 +123,8 @@ class WorkerThread(Thread):
                 req_sc.setsockopt(IPPROTO_TCP, TCP_NODELAY, 1)
                 req_sc.connect((host, port))
                 req_sc.send('%s\r\n' % new_head)
+
+                sleep(0.5)
 
                 req_sc.send('Host: ')
                 for c in phost:
