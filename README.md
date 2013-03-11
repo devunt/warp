@@ -3,6 +3,13 @@ WARP
 
 Simple http transparent proxy made in python 2.7.3 (can be run with pypy)
 
+This is proof-of-concept code.
+
+
+## Dependency
+* python 2.7.3
+* gevent >= 0.13.8
+
 ## How to use
 1. run with python interpreter
 
