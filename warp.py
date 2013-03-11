@@ -53,7 +53,7 @@ class WorkerThread(Thread):
     def run(self):
         logging.debug('%s started' % self.name)
         while True:
-            conn, addr = self.q.get(block=True, timeout=0.05)
+            conn, addr = self.q.get(block=True)
             logging.debug('%s: Accept new task' % self.name)
             cont = ''
             try:
