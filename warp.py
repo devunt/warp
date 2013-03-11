@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-VERSION = "v0.1 (prototype)"
+VERSION = "v0.1 (poc code)"
 
 """
 Copyright (c) 2013 devunt
@@ -53,7 +53,7 @@ class WorkerThread(Thread):
     def run(self):
         logging.debug('%s started' % self.name)
         while True:
-            conn, addr = self.q.get(block=True)
+            conn, addr = self.q.get(block=True, timeout=0.05)
             logging.debug('%s: Accept new task' % self.name)
             cont = ''
             try:
