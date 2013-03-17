@@ -124,7 +124,7 @@ class WorkerThread(Thread):
                 req_sc.connect((host, port))
                 req_sc.send('%s\r\n' % new_head)
 
-                sleep(0.5)
+                sleep(0.2)
 
                 req_sc.send('Host: ')
                 for c in phost:
