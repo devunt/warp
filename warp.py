@@ -192,12 +192,12 @@ def main():
                       help='Port to listen [%default]')
     parser.add_option('-c', '--count', type='int', default=64,
                       help='Count of thread to spawn [%default]')
-    parser.add_option('-d', '--debug', action="store_true",
-                      help='Enable debug mode')
+    parser.add_option('-v', '--verbose', action="store_true",
+                      help='Print verbose')
     options, args = parser.parse_args()
     if not (1 <= options.port <= 65535):
         parser.error('port must be 1-65535')
-    if options.debug:
+    if options.verbose:
         lv = logging.DEBUG
     else:
         lv = logging.INFO
