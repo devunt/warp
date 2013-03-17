@@ -167,12 +167,11 @@ class Server(object):
             th.daemon = True
             th.start()
         self.sc = socket(AF_INET, SOCK_STREAM)
-        self.sc.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
         try:
             self.sc.bind((self.hostname, self.port))
         except error as e:
-            logging.error('!!! Fail to bind server at [%s:%d]: %s' % (self.hostname, self.port, e.args[1]))
-            return
+            logging.critical('!!! Fail to bind server at [%s:%d]: %s' % (self.hostname, self.port, e.args[1]))
+            return 1
         logging.info('Server binded at [%s:%d]. Listen with %d threads.' % (self.hostname, self.port, self.count))
         self.sc.listen(10)
 
@@ -193,22 +192,22 @@ def main():
                       help='Port to listen [%default]')
     parser.add_option('-c', '--count', type='int', default=64,
                       help='Count of thread to spawn [%default]')
-    parser.add_option('-v', '--verbose', action="store_true",
-                      help='Print verbose')
+    parser.add_option('-d', '--debug', action="store_true",
+                      help='Enable debug mode')
     options, args = parser.parse_args()
     if not (1 <= options.port <= 65535):
         parser.error('port must be 1-65535')
-    if options.verbose:
+    if options.debug:
         lv = logging.DEBUG
     else:
         lv = logging.INFO
     logging.basicConfig(level=lv, format='[%(asctime)s] {%(levelname)s} %(message)s')
     server = Server(options.host, options.port, options.count)
     try:
-        server.start()
+        return server.start()
     except KeyboardInterrupt:
         print 'bye'
 
 
 if __name__ == '__main__':
-    main()
+    exit(main())
