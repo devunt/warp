@@ -127,7 +127,15 @@ class WorkerThread(Thread):
                 sleep(0.5)
 
                 req_sc.send('Host: ')
-                for c in phost:
+                def feed_phost(phost):
+                    import random
+                    i = 1
+                    while phost:
+                        yield random.randrange(2, 4), phost[:i]
+                        phost = phost[i:]
+                        i = random.randrange(2, 5)
+                for delay, c in feed_phost(phost):
+                    sleep(delay/10.0)
                     req_sc.send(c)
                 req_sc.send('\r\n')
 
