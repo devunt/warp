@@ -180,7 +180,7 @@ class Server(object):
         except error as e:
             logging.critical('!!! Fail to bind server at [%s:%d]: %s' % (self.hostname, self.port, e.args[1]))
             return 1
-        logging.info('Server binded at [%s:%d]. Listen with %d threads.' % (self.hostname, self.port, self.count))
+        logging.info('Server bound at [%s:%d]. Listen with %d threads.' % (self.hostname, self.port, self.count))
         self.sc.listen(10)
 
         while True:
