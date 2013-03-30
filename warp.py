@@ -79,7 +79,6 @@ class WorkerThread(Thread):
             m1 = REGEX_PROXY_CONNECTION.search(cont)
             m2 = REGEX_USER_AGENT_FIREFOX.search(cont)
             if not m1 and not m2:
-            if not m:
                 self.q.task_done()
                 logging.debug('!!! %s: Task reject' % self.name)
                 return
@@ -97,7 +96,7 @@ class WorkerThread(Thread):
                     phost = line[6:]
                 elif not 'Proxy-Connection' in line:
                     sreq.append(line)
-                    
+
             m = REGEX_CONNECTION.search(cont)
             if m:
                 sreq.append("Connection: %s" % m.group(1))
