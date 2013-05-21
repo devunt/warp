@@ -43,7 +43,7 @@ REGEX_HOST = compile(r'(^:+):([0-9]{1,5})')
 REGEX_CONTENT_LENGTH = compile(r'\r\nContent-Length: ([0-9]+)\r\n')
 REGEX_PROXY_CONNECTION = compile(r'\r\nProxy-Connection: (.+)\r\n')
 REGEX_CONNECTION = compile(r'\r\nConnection: (.+)\r\n')
-REGEX_USER_AGENT_FIREFOX = compile(r'\r\nUser-Agent: .+Firefox.+\r\n')
+REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER = compile(r'\r\nUser-Agent: .*(Firefox|Opera).+\r\n')
 
 
 class WorkerThread(Thread):
@@ -77,7 +77,7 @@ class WorkerThread(Thread):
                 pass
 
             m1 = REGEX_PROXY_CONNECTION.search(cont)
-            m2 = REGEX_USER_AGENT_FIREFOX.search(cont)
+            m2 = REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER.search(cont)
             if not m1 and not m2:
                 self.q.task_done()
                 logging.debug('!!! %s: Task reject' % self.name)
