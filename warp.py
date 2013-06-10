@@ -69,7 +69,7 @@ class WorkerThread(Thread):
                 if m:
                     cl = int(m.group(1))
                     ct = cont.split('\r\n\r\n')[1]
-                    while (len(ct) != cl):
+                    while (len(ct) < cl):
                         data = conn.recv(1024)
                         ct += data
                     cont = cont.split('\r\n\r\n')[0] + '\r\n\r\n' + ct
