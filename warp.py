@@ -142,9 +142,7 @@ class WorkerThread(Thread):
                 for delay, c in feed_phost(phost):
                     sleep(delay/10.0)
                     req_sc.send(c)
-                req_sc.send('\r\n')
-
-                req_sc.send('\r\n'.join(sreq))
+                req_sc.sendall('\r\n' + '\r\n'.join(sreq))
                 req_sc.send('\r\n\r\n')
 
             except:
