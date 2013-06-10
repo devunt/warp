@@ -91,17 +91,20 @@ class WorkerThread(Thread):
             head = req[0].split(' ')
             phost = False
             sreq = []
+            sreqHeaderEndIndex = 0
             for line in req[1:]:
                 if "Host: " in line:
                     phost = line[6:]
                 elif not 'Proxy-Connection' in line:
                     sreq.append(line)
+                    if len(line) == 0 and sreqHeaderEndIndex == 0:
+                        sreqHeaderEndIndex = len(sreq) - 1
+            if sreqHeaderEndIndex == 0:
+                sreqHeaderEndIndex = len(sreq)
 
             m = REGEX_CONNECTION.search(cont)
-            if m:
-                sreq.append("Connection: %s" % m.group(1))
-            else:
-                sreq.append("Connection: close")
+            if not m:
+                sreq.insert(sreqHeaderEndIndex, "Connection: close")
 
             if not phost:
                 phost = '127.0.0.1'
