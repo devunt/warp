@@ -79,12 +79,14 @@ class WorkerThread(Thread):
             m1 = REGEX_PROXY_CONNECTION.search(cont)
             m2 = REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER.search(cont)
             if not m1 and not m2:
+                conn.close()
                 self.q.task_done()
                 logging.debug('!!! %s: Task reject' % self.name)
                 return
 
             req = cont.split('\r\n')
             if len(req) < 4:
+                conn.close()
                 self.q.task_done()
                 logging.debug('!!! %s: Task reject' % self.name)
                 return
