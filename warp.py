@@ -81,14 +81,14 @@ class WorkerThread(Thread):
             if not m1 and not m2:
                 conn.close()
                 self.q.task_done()
-                logging.debug('!!! %s: Task reject' % self.name)
+                logging.debug('!!! %s: Task reject (no Proxy-Connection header)' % self.name)
                 return
 
             req = cont.split('\r\n')
             if len(req) < 4:
                 conn.close()
                 self.q.task_done()
-                logging.debug('!!! %s: Task reject' % self.name)
+                logging.debug('!!! %s: Task reject (invalid request)' % self.name)
                 return
             head = req[0].split(' ')
             phost = False
