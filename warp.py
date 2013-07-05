@@ -84,6 +84,12 @@ class WorkerThread(Thread):
             except:
                 pass
 
+            if len(cont) == 0:
+                conn.close()
+                self.q.task_done()
+                logging.debug('!!! %s: Task reject (empty request)' % self.name)
+                return
+
             m1 = REGEX_PROXY_CONNECTION.search(cont)
             m2 = REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER.search(cont)
             if not m1 and not m2:
