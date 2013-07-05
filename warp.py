@@ -58,10 +58,18 @@ class WorkerThread(Thread):
             logging.debug('%s: Accept new task' % self.name)
             cont = ''
             try:
+                RECV_MAX_RETRY = 1
+                recvRetry = 0
                 while True:
                     data = conn.recv(1024)
                     if not data:
-                        break
+                        if len(cont) == 0 and recvRetry < RECV_MAX_RETRY:
+                            # handle the case when the client make connection but sending data is delayed for some reasons
+                            recvRetry += 1
+                            sleep(0.2)
+                            continue
+                        else:
+                            break
                     cont += data
                     if data.find('\r\n\r\n') != -1:
                         break
