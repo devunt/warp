@@ -58,10 +58,18 @@ class WorkerThread(Thread):
             logging.debug('%s: Accept new task' % self.name)
             cont = ''
             try:
+                RECV_MAX_RETRY = 1
+                recvRetry = 0
                 while True:
                     data = conn.recv(1024)
                     if not data:
-                        break
+                        if len(cont) == 0 and recvRetry < RECV_MAX_RETRY:
+                            # handle the case when the client make connection but sending data is delayed for some reasons
+                            recvRetry += 1
+                            sleep(0.2)
+                            continue
+                        else:
+                            break
                     cont += data
                     if data.find('\r\n\r\n') != -1:
                         break
@@ -76,26 +84,45 @@ class WorkerThread(Thread):
             except:
                 pass
 
+            if len(cont) == 0:
+                conn.close()
+                self.q.task_done()
+                logging.debug('!!! %s: Task reject (empty request)' % self.name)
+                return
+
             m1 = REGEX_PROXY_CONNECTION.search(cont)
             m2 = REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER.search(cont)
             if not m1 and not m2:
+                conn.close()
                 self.q.task_done()
-                logging.debug('!!! %s: Task reject' % self.name)
+                logging.debug('!!! %s: Task reject (no Proxy-Connection header)' % self.name)
                 return
 
             req = cont.split('\r\n')
             if len(req) < 4:
+                conn.close()
                 self.q.task_done()
-                logging.debug('!!! %s: Task reject' % self.name)
+                logging.debug('!!! %s: Task reject (invalid request)' % self.name)
                 return
             head = req[0].split(' ')
             phost = False
             sreq = []
             sreqHeaderEndIndex = 0
             for line in req[1:]:
-                if "Host: " in line:
-                    phost = line[6:]
-                elif not 'Proxy-Connection' in line:
+                headerNameAndValue = line.split(': ', 1)
+                if len(headerNameAndValue) == 2:
+                    headerName, headerValue = headerNameAndValue
+                else:
+                    headerName, headerValue = headerNameAndValue[0], None
+
+                if headerName == "Host":
+                    phost = headerValue
+                elif headerName == "Connection":
+                    if headerValue.lower() in ('keep-alive', 'persist'):
+                        sreq.append("Connection: close")    # current version of this program does not support the HTTP keep-alive feature
+                    else:
+                        sreq.append(line)
+                elif headerName != 'Proxy-Connection':
                     sreq.append(line)
                     if len(line) == 0 and sreqHeaderEndIndex == 0:
                         sreqHeaderEndIndex = len(sreq) - 1
