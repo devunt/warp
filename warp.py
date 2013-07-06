@@ -109,9 +109,20 @@ class WorkerThread(Thread):
             sreq = []
             sreqHeaderEndIndex = 0
             for line in req[1:]:
-                if "Host: " in line:
-                    phost = line[6:]
-                elif not 'Proxy-Connection' in line:
+                headerNameAndValue = line.split(': ', 1)
+                if len(headerNameAndValue) == 2:
+                    headerName, headerValue = headerNameAndValue
+                else:
+                    headerName, headerValue = headerNameAndValue[0], None
+
+                if headerName == "Host":
+                    phost = headerValue
+                elif headerName == "Connection":
+                    if headerValue.lower() in ('keep-alive', 'persist'):
+                        sreq.append("Connection: close")    # current version of this program does not support the HTTP keep-alive feature
+                    else:
+                        sreq.append(line)
+                elif headerName != 'Proxy-Connection':
                     sreq.append(line)
                     if len(line) == 0 and sreqHeaderEndIndex == 0:
                         sreqHeaderEndIndex = len(sreq) - 1
