@@ -157,8 +157,8 @@ def process_warp(client_reader, client_writer):
             def generate_rndstrs(strings, length):
                 return ''.join(random.choice(strings) for _ in range(length))
             import string
-            return ['X-%s: %s\r\n' % (generate_rndstrs(string.ascii_uppercase, 16), generate_rndstrs(string.ascii_letters + string.digits, 32))
-                    for _ in range(80)]
+            return ['X-%s: %s\r\n' % (generate_rndstrs(string.ascii_uppercase, 16), generate_rndstrs(string.ascii_letters + string.digits, 128))
+                    for _ in range(32)]
 
         req_writer.writelines(list(map(lambda x: x.encode('utf-8'), generate_dummyheaders())))
         yield from req_writer.drain()
