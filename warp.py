@@ -31,6 +31,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 from socket import TCP_NODELAY
 from re import compile
 from optparse import OptionParser
+import traceback
 import logging
 import asyncio
 
@@ -84,7 +85,7 @@ def process_warp(client_reader, client_writer):
                 ct += client_reader.read(1024)
             cont = cont.split('\r\n\r\n')[0] + '\r\n\r\n' + ct
     except:
-        pass
+        traceback.print_exc()
 
     if len(cont) == 0:
         logging.debug('!!! Task reject (empty request)')
@@ -167,7 +168,7 @@ def process_warp(client_reader, client_writer):
         req_writer.write(list(map(lambda x: x.encode('utf-8'), [''] + sreq + ['', ''])))
         yield from req_writer.drain()
     except:
-        pass
+        traceback.print_exc()
 
     while True:
         try:
@@ -176,7 +177,7 @@ def process_warp(client_reader, client_writer):
                 break
             client_writer.write(buf)
         except:
-            pass
+            traceback.print_exc()
 
     client_writer.close()
     logging.debug('Task done')
