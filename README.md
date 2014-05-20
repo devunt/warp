@@ -40,4 +40,9 @@ MIT License (include in warp.py)
    * some browers (will fix it later)
 
 # Special thanks to
-* Park Jeongmin <pjm0616@gmail.com> for dummy header ideas
+* peecky (https://github.com/peecky) for lots of improvement code contributes.
+* Young-Ho Cha (https://github.com/ycha) for randomize feed hostname code.
+* Hong Minhee (https://github.com/dahlia) for python syntax and optparse implementaion.
+* Park Jeongmin (https://github.com/pjm0616) for dummy header ideas.
+* EJ Lee (https://github.com/hdformat) for firefox support code.
+* Inseok Lee (https://github.com/dlunch) for english grammers :p
