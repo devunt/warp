@@ -1,19 +1,18 @@
 WARP
 ====
 
-Simple http transparent proxy made in python 2.7.3 (can be run with pypy)
+Simple http transparent proxy made in python 3.4
 
 This is proof-of-concept code.
 
 
 ## Dependency
-* python 2.7.3
-* gevent >= 0.13.8
+* python 3.4.0
 
 ## How to use
 1. run with python interpreter
 
-        $ python warp.py
+        $ python3 warp.py
 
 2. set browser's proxy setting to 
 
