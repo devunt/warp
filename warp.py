@@ -32,6 +32,7 @@ from socket import TCP_NODELAY
 from re import compile
 from optparse import OptionParser
 import traceback
+import random
 import logging
 import asyncio
 
@@ -153,9 +154,19 @@ def process_warp(client_reader, client_writer):
         yield from req_writer.drain()
         yield from asyncio.sleep(0.2)
 
+        def generate_dummyheaders():
+            def generate_rndstrs(strings, length):
+                return ''.join(random.choice(strings) for _ in range(length))
+            import string
+            return ['X-%s: %s\r\n' % (generate_rndstrs(string.ascii_uppercase, 16), generate_rndstrs(string.ascii_letters + string.digits, 32))
+                    for _ in range(80)]
+
+        req_writer.writelines(list(map(lambda x: x.encode('utf-8'), generate_dummyheaders())))
+        yield from req_writer.drain()
+
         req_writer.write(b'Host: ')
+        yield from req_writer.drain()
         def feed_phost(phost):
-            import random
             i = 1
             while phost:
                 yield random.randrange(2, 4), phost[:i]
@@ -165,7 +176,7 @@ def process_warp(client_reader, client_writer):
             yield from asyncio.sleep(delay/10.0)
             req_writer.write(c.encode('utf-8'))
             yield from req_writer.drain()
-        req_writer.write(list(map(lambda x: x.encode('utf-8'), [''] + sreq + ['', ''])))
+        req_writer.writelines(list(map(lambda x: (x + '\r\n').encode('utf-8'), [''] + sreq + ['', ''])))
         yield from req_writer.drain()
     except:
         traceback.print_exc()

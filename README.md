@@ -38,3 +38,6 @@ MIT License (include in warp.py)
    * some company firewalls
    * some school firewalls
    * some browers (will fix it later)
+
+# Special thanks to
+* Park Jeongmin <pjm0616@gmail.com> for dummy header ideas
