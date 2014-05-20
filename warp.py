@@ -146,7 +146,6 @@ def process_warp(client_reader, client_writer):
     else:
         host = phost
         port = 80
-        phost = "%s:80" % host
 
     try:
         req_reader, req_writer = yield from asyncio.open_connection(host, port, flags=TCP_NODELAY)
