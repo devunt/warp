@@ -177,17 +177,18 @@ def process_warp(client_reader, client_writer):
             yield from req_writer.drain()
         req_writer.writelines(list(map(lambda x: (x + '\r\n').encode('utf-8'), [''] + sreq + ['', ''])))
         yield from req_writer.drain()
+
+        while True:
+            try:
+                buf = yield from req_reader.readline()
+                if len(buf) == 0:
+                    break
+                client_writer.write(buf)
+            except:
+                traceback.print_exc()
+
     except:
         traceback.print_exc()
-
-    while True:
-        try:
-            buf = yield from req_reader.readline()
-            if len(buf) == 0:
-                break
-            client_writer.write(buf)
-        except:
-            traceback.print_exc()
 
     client_writer.close()
     logging.debug('Task done')
