@@ -45,6 +45,9 @@ REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER = compile(r'\r\nUser-Agent: .*
 
 clients = {}
 
+logging.basicConfig(format='[%(asctime)s] {%(levelname)s} %(message)s')
+logger = logging.getLogger('warp')
+
 def accept_client(client_reader, client_writer):
     task = asyncio.Task(process_warp(client_reader, client_writer))
     clients[task] = (client_reader, client_writer)
@@ -52,15 +55,15 @@ def accept_client(client_reader, client_writer):
     def client_done(task):
         del clients[task]
         client_writer.close()
-        logging.debug('Connection closed')
+        logger.debug('Connection closed')
 
-    logging.debug('Connection started')
+    logger.debug('Connection started')
     task.add_done_callback(client_done)
 
 
 @asyncio.coroutine
 def process_warp(client_reader, client_writer):
-    logging.debug('WARP task started')
+    logger.debug('WARP task started')
     cont = ''
     try:
         RECV_MAX_RETRY = 1
@@ -89,43 +92,47 @@ def process_warp(client_reader, client_writer):
         traceback.print_exc()
 
     if len(cont) == 0:
-        logging.debug('!!! Task reject (empty request)')
+        logger.debug('!!! Task reject (empty request)')
         return
 
     m1 = REGEX_PROXY_CONNECTION.search(cont)
     m2 = REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER.search(cont)
     if not m1 and not m2:
-        logging.debug('!!! Task reject (no Proxy-Connection header)')
+        logger.debug('!!! Task reject (no Proxy-Connection header)')
         return
 
     req = cont.split('\r\n')
     if len(req) < 4:
-        logging.debug('!!! Task reject (invalid request)')
+        logger.debug('!!! Task reject (invalid request)')
         return
     head = req[0].split(' ')
     if head[0] == 'CONNECT': # https proxy
-        logging.debug('BYPASSING <%s %s> (SSL connection)' % (head[0], head[1]))
-        m = REGEX_HOST.search(head[1])
-        host = m.group(1)
-        port = int(m.group(2))
-        req_reader, req_writer = yield from asyncio.open_connection(host, port, ssl=False)
-        client_writer.write(b'HTTP/1.1 200 Connection established\r\n\r\n')
-        @asyncio.coroutine
-        def relay_stream(reader, writer):
-            try:
-                while True:
-                    line = yield from reader.read(1024)
-                    if len(line) == 0:
-                        break
-                    writer.write(line)
-            except:
-                traceback.print_exc()
-        tasks = [
-            asyncio.Task(relay_stream(client_reader, req_writer)),
-            asyncio.Task(relay_stream(req_reader, client_writer)),
-        ]
-        yield from asyncio.wait(tasks)
-        return
+        try:
+            logger.info('BYPASSING <%s %s> (SSL connection)' % (head[0], head[1]))
+            m = REGEX_HOST.search(head[1])
+            host = m.group(1)
+            port = int(m.group(2))
+            req_reader, req_writer = yield from asyncio.open_connection(host, port, ssl=False)
+            client_writer.write(b'HTTP/1.1 200 Connection established\r\n\r\n')
+            @asyncio.coroutine
+            def relay_stream(reader, writer):
+                try:
+                    while True:
+                        line = yield from reader.read(1024)
+                        if len(line) == 0:
+                            break
+                        writer.write(line)
+                except:
+                    traceback.print_exc()
+            tasks = [
+                asyncio.Task(relay_stream(client_reader, req_writer)),
+                asyncio.Task(relay_stream(req_reader, client_writer)),
+            ]
+            yield from asyncio.wait(tasks)
+        except:
+            traceback.print_exc()
+        finally:
+            return
     phost = False
     sreq = []
     sreqHeaderEndIndex = 0
@@ -158,7 +165,7 @@ def process_warp(client_reader, client_writer):
         phost = '127.0.0.1'
     path = head[1][len(phost)+7:]
 
-    logging.debug('WARPING <%s %s>' % (head[0], head[1]))
+    logger.info('WARPING <%s %s>' % (head[0], head[1]))
 
     new_head = ' '.join([head[0], path, head[2]])
 
@@ -214,7 +221,7 @@ def process_warp(client_reader, client_writer):
         traceback.print_exc()
 
     client_writer.close()
-    logging.debug('WARP task done')
+    logger.debug('WARP task done')
 
 
 @asyncio.coroutine
@@ -222,9 +229,9 @@ def start_warp_server(host, port):
     try:
         yield from asyncio.start_server(accept_client, host=host, port=port)
     except error as e:
-        logging.critical('!!! Fail to bind server at [%s:%d]: %s' % (host, port, e.args[1]))
+        logger.critical('!!! Fail to bind server at [%s:%d]: %s' % (host, port, e.args[1]))
         return 1
-    logging.info('Server bound at [%s:%d].' % (host, port))
+    logger.info('Server bound at [%s:%d].' % (host, port))
 
 
 def main():
@@ -247,7 +254,7 @@ def main():
         lv = logging.DEBUG
     else:
         lv = logging.INFO
-    logging.basicConfig(level=lv, format='[%(asctime)s] {%(levelname)s} %(message)s')
+    logger.setLevel(lv)
     loop = asyncio.get_event_loop()
     try:
         asyncio.async(start_warp_server(options.host, options.port))
