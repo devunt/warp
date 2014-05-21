@@ -30,7 +30,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 
 from socket import TCP_NODELAY
 from re import compile
-from optparse import OptionParser
+from argparse import ArgumentParser
 import traceback
 import random
 import logging
@@ -45,8 +45,9 @@ REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER = compile(r'\r\nUser-Agent: .*
 
 clients = {}
 
-logging.basicConfig(format='[%(asctime)s] {%(levelname)s} %(message)s')
+logging.basicConfig(level=logging.INFO, format='[%(asctime)s] {%(levelname)s} %(message)s')
 logger = logging.getLogger('warp')
+
 
 def accept_client(client_reader, client_writer):
     task = asyncio.Task(process_warp(client_reader, client_writer))
@@ -239,25 +240,25 @@ def main():
     port and provides ``--help`` message.
 
     """
-    parser = OptionParser(description='Simple HTTP transparent proxy',
-                          version=VERSION)
-    parser.add_option('-H', '--host', default='127.0.0.1',
-                      help='Host to listen [%default]')
-    parser.add_option('-p', '--port', type='int', default=8800,
-                      help='Port to listen [%default]')
-    parser.add_option('-v', '--verbose', action="store_true",
+    parser = ArgumentParser(description='Simple HTTP transparent proxy')
+    parser.add_argument('-H', '--host', default='127.0.0.1',
+                      help='Host to listen [default: %(default)s]')
+    parser.add_argument('-p', '--port', type=int, default=8800,
+                      help='Port to listen [default: %(default)d]')
+    parser.add_argument('-v', '--verbose', action="count", default=0,
                       help='Print verbose')
-    options, args = parser.parse_args()
-    if not (1 <= options.port <= 65535):
+    args = parser.parse_args()
+    if not (1 <= args.port <= 65535):
         parser.error('port must be 1-65535')
-    if options.verbose:
-        lv = logging.DEBUG
-    else:
-        lv = logging.INFO
-    logger.setLevel(lv)
+    if args.verbose >= 3:
+        parser.error('verbose level must be 1-2')
+    if args.verbose >= 1:
+        logger.setLevel(logging.DEBUG)
+    if args.verbose >= 2:
+        logging.getLogger().setLevel(logging.DEBUG)
     loop = asyncio.get_event_loop()
     try:
-        asyncio.async(start_warp_server(options.host, options.port))
+        asyncio.async(start_warp_server(args.host, args.port))
         loop.run_forever()
     except KeyboardInterrupt:
         print('bye')
