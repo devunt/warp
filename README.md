@@ -23,10 +23,11 @@ This is proof-of-concept code.
 4. PROFIT!
 
 ### Command help
-$ python warp.py --help
+
+    $ python warp.py --help
 
 ## License
-MIT License (include in warp.py)
+MIT License (included in [warp.py](warp.py))
 
 ## 면책조항
 1. WARP를 사용함으로써 생기는 모든 책임은 사용자에게 있습니다.
