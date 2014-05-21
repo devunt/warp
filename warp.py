@@ -65,44 +65,45 @@ def accept_client(client_reader, client_writer):
 @asyncio.coroutine
 def process_warp(client_reader, client_writer):
     logger.debug('WARP task started')
-    cont = ''
+    header = ''
+    payload = b''
     try:
         RECV_MAX_RETRY = 1
         recvRetry = 0
         while True:
             line = yield from client_reader.readline()
             if not line:
-                if len(cont) == 0 and recvRetry < RECV_MAX_RETRY:
+                if len(header) == 0 and recvRetry < RECV_MAX_RETRY:
                     # handle the case when the client make connection but sending data is delayed for some reasons
                     recvRetry += 1
                     yield from asyncio.sleep(0.2)
                     continue
                 else:
                     break
-            cont += line.decode('utf-8')
             if line == b'\r\n':
                 break
-        m = REGEX_CONTENT_LENGTH.search(cont)
+            if line != b'':
+                header += line.decode('utf-8')
+
+        m = REGEX_CONTENT_LENGTH.search(header)
         if m:
             cl = int(m.group(1))
-            ct = cont.split('\r\n\r\n')[1]
-            while (len(ct) < cl):
-                ct += yield from client_reader.read(1024)
-            cont = cont.split('\r\n\r\n')[0] + '\r\n\r\n' + ct
+            while (len(payload) < cl):
+                payload += yield from client_reader.read(1024)
     except:
         traceback.print_exc()
 
-    if len(cont) == 0:
+    if len(header) == 0:
         logger.debug('!!! Task reject (empty request)')
         return
 
-    m1 = REGEX_PROXY_CONNECTION.search(cont)
-    m2 = REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER.search(cont)
+    m1 = REGEX_PROXY_CONNECTION.search(header)
+    m2 = REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER.search(header)
     if not m1 and not m2:
         logger.debug('!!! Task reject (no Proxy-Connection header)')
         return
 
-    req = cont.split('\r\n')
+    req = header.split('\r\n')[:-1]
     if len(req) < 4:
         logger.debug('!!! Task reject (invalid request)')
         return
@@ -158,7 +159,7 @@ def process_warp(client_reader, client_writer):
     if sreqHeaderEndIndex == 0:
         sreqHeaderEndIndex = len(sreq)
 
-    m = REGEX_CONNECTION.search(cont)
+    m = REGEX_CONNECTION.search(header)
     if not m:
         sreq.insert(sreqHeaderEndIndex, "Connection: close")
 
@@ -206,17 +207,22 @@ def process_warp(client_reader, client_writer):
             yield from asyncio.sleep(delay/10.0)
             req_writer.write(c.encode('utf-8'))
             yield from req_writer.drain()
-        req_writer.writelines(list(map(lambda x: (x + '\r\n').encode('utf-8'), [''] + sreq + ['', ''])))
+        req_writer.write(b'\r\n')
+        req_writer.writelines(list(map(lambda x: (x + '\r\n').encode('utf-8'), sreq)))
+        req_writer.write(b'\r\n')
+        if payload != b'':
+            req_writer.write(payload)
+            req_writer.write(b'\r\n')
         yield from req_writer.drain()
 
-        while True:
-            try:
-                buf = yield from req_reader.readline()
+        try:
+            while True:
+                buf = yield from req_reader.read(1024)
                 if len(buf) == 0:
                     break
                 client_writer.write(buf)
-            except:
-                traceback.print_exc()
+        except:
+            traceback.print_exc()
 
     except:
         traceback.print_exc()
