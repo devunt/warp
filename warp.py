@@ -37,7 +37,7 @@ import logging
 import asyncio
 
 
-REGEX_HOST = compile(r'(^:+):([0-9]{1,5})')
+REGEX_HOST = compile(r'(.+?):([0-9]{1,5})')
 REGEX_CONTENT_LENGTH = compile(r'\r\nContent-Length: ([0-9]+)\r\n')
 REGEX_PROXY_CONNECTION = compile(r'\r\nProxy-Connection: (.+)\r\n')
 REGEX_CONNECTION = compile(r'\r\nConnection: (.+)\r\n')
@@ -103,6 +103,29 @@ def process_warp(client_reader, client_writer):
         logging.debug('!!! Task reject (invalid request)')
         return
     head = req[0].split(' ')
+    if head[0] == 'CONNECT': # https proxy
+        logging.debug('BYPASSING <%s %s> (SSL connection)' % (head[0], head[1]))
+        m = REGEX_HOST.search(head[1])
+        host = m.group(1)
+        port = int(m.group(2))
+        req_reader, req_writer = yield from asyncio.open_connection(host, port, ssl=False)
+        client_writer.write(b'HTTP/1.1 200 Connection established\r\n\r\n')
+        @asyncio.coroutine
+        def relay_stream(reader, writer):
+            try:
+                while True:
+                    line = yield from reader.read(1024)
+                    if len(line) == 0:
+                        break
+                    writer.write(line)
+            except:
+                traceback.print_exc()
+        tasks = [
+            asyncio.Task(relay_stream(client_reader, req_writer)),
+            asyncio.Task(relay_stream(req_reader, client_writer)),
+        ]
+        yield from asyncio.wait(tasks)
+        return
     phost = False
     sreq = []
     sreqHeaderEndIndex = 0
