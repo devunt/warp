@@ -52,15 +52,15 @@ def accept_client(client_reader, client_writer):
     def client_done(task):
         del clients[task]
         client_writer.close()
-        logging.debug('End Connection')
+        logging.debug('Connection closed')
 
-    logging.debug('New Connection')
+    logging.debug('Connection started')
     task.add_done_callback(client_done)
 
 
 @asyncio.coroutine
 def process_warp(client_reader, client_writer):
-    logging.debug('Accept new task')
+    logging.debug('WARP task started')
     cont = ''
     try:
         RECV_MAX_RETRY = 1
@@ -135,7 +135,7 @@ def process_warp(client_reader, client_writer):
         phost = '127.0.0.1'
     path = head[1][len(phost)+7:]
 
-    logging.debug('Process - %s' % req[0])
+    logging.debug('WARPING <%s %s>' % (head[0], head[1]))
 
     new_head = ' '.join([head[0], path, head[2]])
 
@@ -191,7 +191,7 @@ def process_warp(client_reader, client_writer):
         traceback.print_exc()
 
     client_writer.close()
-    logging.debug('Task done')
+    logging.debug('WARP task done')
 
 
 @asyncio.coroutine
