@@ -68,7 +68,7 @@ def process_warp(client_reader, client_writer):
     header = ''
     payload = b''
     try:
-        RECV_MAX_RETRY = 1
+        RECV_MAX_RETRY = 3
         recvRetry = 0
         while True:
             line = yield from client_reader.readline()
