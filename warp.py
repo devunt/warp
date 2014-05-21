@@ -28,21 +28,21 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from socket import TCP_NODELAY
-from re import compile
 from argparse import ArgumentParser
+from socket import TCP_NODELAY
 from time import time
-import traceback
-import random
-import logging
+from traceback import print_exc
 import asyncio
+import logging
+import random
+import re
 
 
-REGEX_HOST = compile(r'(.+?):([0-9]{1,5})')
-REGEX_CONTENT_LENGTH = compile(r'\r\nContent-Length: ([0-9]+)\r\n')
-REGEX_PROXY_CONNECTION = compile(r'\r\nProxy-Connection: (.+)\r\n')
-REGEX_CONNECTION = compile(r'\r\nConnection: (.+)\r\n')
-REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER = compile(r'\r\nUser-Agent: .*(Firefox|Opera).+\r\n')
+REGEX_HOST = re.compile(r'(.+?):([0-9]{1,5})')
+REGEX_CONTENT_LENGTH = re.compile(r'\r\nContent-Length: ([0-9]+)\r\n')
+REGEX_PROXY_CONNECTION = re.compile(r'\r\nProxy-Connection: (.+)\r\n')
+REGEX_CONNECTION = re.compile(r'\r\nConnection: (.+)\r\n')
+REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER = re.compile(r'\r\nUser-Agent: .*(Firefox|Opera).+\r\n')
 
 clients = {}
 
@@ -96,7 +96,7 @@ def process_warp(client_reader, client_writer):
             while (len(payload) < cl):
                 payload += yield from client_reader.read(1024)
     except:
-        traceback.print_exc()
+        print_exc()
 
     if len(header) == 0:
         logger.debug('[%s] !!! Task reject (empty request)' % ident)
@@ -130,14 +130,14 @@ def process_warp(client_reader, client_writer):
                             break
                         writer.write(line)
                 except:
-                    traceback.print_exc()
+                    print_exc()
             tasks = [
                 asyncio.Task(relay_stream(client_reader, req_writer)),
                 asyncio.Task(relay_stream(req_reader, client_writer)),
             ]
             yield from asyncio.wait(tasks)
         except:
-            traceback.print_exc()
+            print_exc()
         finally:
             return
     phost = False
@@ -227,10 +227,10 @@ def process_warp(client_reader, client_writer):
                     break
                 client_writer.write(buf)
         except:
-            traceback.print_exc()
+            print_exc()
 
     except:
-        traceback.print_exc()
+        print_exc()
 
     client_writer.close()
 
