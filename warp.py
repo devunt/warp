@@ -31,6 +31,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 from socket import TCP_NODELAY
 from re import compile
 from argparse import ArgumentParser
+from time import time
 import traceback
 import random
 import logging
@@ -46,25 +47,29 @@ REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER = compile(r'\r\nUser-Agent: .*
 clients = {}
 
 logging.basicConfig(level=logging.INFO, format='[%(asctime)s] {%(levelname)s} %(message)s')
+logging.getLogger('asyncio').setLevel(logging.CRITICAL)
 logger = logging.getLogger('warp')
+verbose = 0
 
 
 def accept_client(client_reader, client_writer):
+    ident = hex(id(client_reader))[-6:]
     task = asyncio.Task(process_warp(client_reader, client_writer))
     clients[task] = (client_reader, client_writer)
+    started_time = time()
 
     def client_done(task):
         del clients[task]
         client_writer.close()
-        logger.debug('Connection closed')
+        logger.debug('[%s] Connection closed (took %.5f seconds)' % (ident, time() - started_time))
 
-    logger.debug('Connection started')
+    logger.debug('[%s] Connection started' % ident)
     task.add_done_callback(client_done)
 
 
 @asyncio.coroutine
 def process_warp(client_reader, client_writer):
-    logger.debug('WARP task started')
+    ident = str(hex(id(client_reader)))[-6:]
     header = ''
     payload = b''
     try:
@@ -94,23 +99,23 @@ def process_warp(client_reader, client_writer):
         traceback.print_exc()
 
     if len(header) == 0:
-        logger.debug('!!! Task reject (empty request)')
+        logger.debug('[%s] !!! Task reject (empty request)' % ident)
         return
 
     m1 = REGEX_PROXY_CONNECTION.search(header)
     m2 = REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER.search(header)
     if not m1 and not m2:
-        logger.debug('!!! Task reject (no Proxy-Connection header)')
+        logger.debug('[%s] !!! Task reject (no Proxy-Connection header)' % ident)
         return
 
     req = header.split('\r\n')[:-1]
     if len(req) < 4:
-        logger.debug('!!! Task reject (invalid request)')
+        logger.debug('[%s] !!! Task reject (invalid request)' % ident)
         return
     head = req[0].split(' ')
     if head[0] == 'CONNECT': # https proxy
         try:
-            logger.info('BYPASSING <%s %s> (SSL connection)' % (head[0], head[1]))
+            logger.info('%sBYPASSING <%s %s> (SSL connection)' % ('[%s] ' % ident if verbose >= 1 else '', head[0], head[1]))
             m = REGEX_HOST.search(head[1])
             host = m.group(1)
             port = int(m.group(2))
@@ -167,7 +172,7 @@ def process_warp(client_reader, client_writer):
         phost = '127.0.0.1'
     path = head[1][len(phost)+7:]
 
-    logger.info('WARPING <%s %s>' % (head[0], head[1]))
+    logger.info('%sWARPING <%s %s>' % ('[%s] ' % ident if verbose >= 1 else '', head[0], head[1]))
 
     new_head = ' '.join([head[0], path, head[2]])
 
@@ -228,7 +233,6 @@ def process_warp(client_reader, client_writer):
         traceback.print_exc()
 
     client_writer.close()
-    logger.debug('WARP task done')
 
 
 @asyncio.coroutine
@@ -261,7 +265,10 @@ def main():
     if args.verbose >= 1:
         logger.setLevel(logging.DEBUG)
     if args.verbose >= 2:
-        logging.getLogger().setLevel(logging.DEBUG)
+        logging.getLogger('warp').setLevel(logging.DEBUG)
+        logging.getLogger('asyncio').setLevel(logging.DEBUG)
+    global verbose
+    verbose = args.verbose
     loop = asyncio.get_event_loop()
     try:
         asyncio.async(start_warp_server(args.host, args.port))
