@@ -86,7 +86,7 @@ def process_warp(client_reader, client_writer):
             cl = int(m.group(1))
             ct = cont.split('\r\n\r\n')[1]
             while (len(ct) < cl):
-                ct += client_reader.read(1024)
+                ct += yield from client_reader.read(1024)
             cont = cont.split('\r\n\r\n')[0] + '\r\n\r\n' + ct
     except:
         traceback.print_exc()
