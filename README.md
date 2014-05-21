@@ -24,7 +24,7 @@ This is proof-of-concept code.
 
 ### Command help
 
-        $ python warp.py --help
+    $ python warp.py --help
 
 ## License
 MIT License (included in [warp.py](warp.py))
