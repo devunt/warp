@@ -17,6 +17,7 @@ This is proof-of-concept code.
 2. set browser's proxy setting to 
 
  [http proxy] host: 127.0.0.1 / port: 8800
+ [https proxy] host: 127.0.0.1 / port: 8800 (https proxy is not recommended)
 
 3. ???
 
