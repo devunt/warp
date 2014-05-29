@@ -7,7 +7,7 @@ This is proof-of-concept code.
 
 
 ## Dependency
-* python 3.4.0
+* python >= 3.4.0
 
 ## How to use
 1. run with python interpreter

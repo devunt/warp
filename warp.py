@@ -28,6 +28,11 @@ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 """
 
+import sys
+if sys.hexversion < 0x3040000:
+    print('Error: You need python 3.4.0 or above. exit.')
+    exit(1)
+
 from argparse import ArgumentParser
 from socket import TCP_NODELAY
 from time import time
