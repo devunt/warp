@@ -12,7 +12,7 @@ def readme():
 
 
 setup(
-    name='warp',
+    name='warp-proxy',
     version='0.1.0',
     description='Simple http transparent proxy made in Python 3.4',
     long_description=readme(),

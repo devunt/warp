@@ -18,7 +18,7 @@ You can install **warp** using ``pip``:
 
 .. code-block:: console
 
-   $ pip install warp
+   $ pip install warp-proxy
 
 Or if you're interested in bleeding edge of the master branch give it a try:
 
