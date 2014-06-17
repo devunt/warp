@@ -13,10 +13,11 @@ def readme():
 
 setup(
     name='warp-proxy',
-    version='0.1.0',
+    version='0.1.1',
     description='Simple http transparent proxy made in Python 3.4',
     long_description=readme(),
     url='https://github.com/devunt/warp',
+    download_url='https://github.com/devunt/warp/tarball/0.1.1',
     author='JuneHyeon Bae',
     author_email='devunt' '@' 'gmail.com',
     license='MIT License',
