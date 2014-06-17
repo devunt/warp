@@ -11,14 +11,33 @@ Dependency
 
 * python >= 3.4.0
 
+How to install
+--------------
+
+You can install **warp** using ``pip``:
+
+.. code-block:: console
+
+   $ pip install warp
+
+Or if you're interested in bleeding edge of the master branch give it a try:
+
+.. code-block:: console
+
+   $ git clone git://github.com.devunt/warp.git
+   $ cd warp/
+   $ pip install -e .
+
+
 How to use
 ----------
 
-1. run with python interpreter
+1. run ``warp`` command (or you might need to run ``warp.py`` instead
+   if setuptools isn't installed in your system)
 
    .. code-block:: console
 
-      $ python3 warp.py
+      $ warp
 
 2. set browser's proxy setting to 
 
