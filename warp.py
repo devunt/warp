@@ -59,7 +59,7 @@ verbose = 0
 
 def accept_client(client_reader, client_writer):
     ident = hex(id(client_reader))[-6:]
-    task = asyncio.Task(process_warp(client_reader, client_writer))
+    task = asyncio.async(process_warp(client_reader, client_writer))
     clients[task] = (client_reader, client_writer)
     started_time = time()
 
@@ -137,8 +137,8 @@ def process_warp(client_reader, client_writer):
                 except:
                     print_exc()
             tasks = [
-                asyncio.Task(relay_stream(client_reader, req_writer)),
-                asyncio.Task(relay_stream(req_reader, client_writer)),
+                asyncio.async(relay_stream(client_reader, req_writer)),
+                asyncio.async(relay_stream(req_reader, client_writer)),
             ]
             yield from asyncio.wait(tasks)
         except:
