@@ -93,7 +93,7 @@ def process_warp(client_reader, client_writer):
             if line == b'\r\n':
                 break
             if line != b'':
-                header += line.decode('utf-8')
+                header += line.decode()
 
         m = REGEX_CONTENT_LENGTH.search(header)
         if m:
@@ -191,7 +191,7 @@ def process_warp(client_reader, client_writer):
 
     try:
         req_reader, req_writer = yield from asyncio.open_connection(host, port, flags=TCP_NODELAY)
-        req_writer.write(('%s\r\n' % new_head).encode('utf-8'))
+        req_writer.write(('%s\r\n' % new_head).encode())
         yield from req_writer.drain()
         yield from asyncio.sleep(0.2)
 
@@ -202,7 +202,7 @@ def process_warp(client_reader, client_writer):
             return ['X-%s: %s\r\n' % (generate_rndstrs(string.ascii_uppercase, 16), generate_rndstrs(string.ascii_letters + string.digits, 128))
                     for _ in range(32)]
 
-        req_writer.writelines(list(map(lambda x: x.encode('utf-8'), generate_dummyheaders())))
+        req_writer.writelines(list(map(lambda x: x.encode(), generate_dummyheaders())))
         yield from req_writer.drain()
 
         req_writer.write(b'Host: ')
@@ -215,10 +215,10 @@ def process_warp(client_reader, client_writer):
                 i = random.randrange(2, 5)
         for delay, c in feed_phost(phost):
             yield from asyncio.sleep(delay/10.0)
-            req_writer.write(c.encode('utf-8'))
+            req_writer.write(c.encode())
             yield from req_writer.drain()
         req_writer.write(b'\r\n')
-        req_writer.writelines(list(map(lambda x: (x + '\r\n').encode('utf-8'), sreq)))
+        req_writer.writelines(list(map(lambda x: (x + '\r\n').encode(), sreq)))
         req_writer.write(b'\r\n')
         if payload != b'':
             req_writer.write(payload)
