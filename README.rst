@@ -1,9 +1,13 @@
 WARP
 ====
 
-Simple http transparent proxy made in python 3.4
+Simple http proxy made in python 3.4
 
 This is proof-of-concept code.
+
+The main purpose of WARP is bypassing http://warning.or.kr/, which is a Deep Packet Inspection that operated by Korea Government.
+For more information, please see https://en.wikipedia.org/wiki/Internet_censorship_in_South_Korea
+You should run this proxy in your local computer.
 
 
 Dependency
@@ -45,15 +49,6 @@ How to use
       host: 127.0.0.1
       port: 8800
 
-   https proxy
-      host: 127.0.0.1
-      port: 8800
-      (https proxy is not recommended)
-
-3. ???
-
-4. PROFIT!
-
 Command help
 ------------
 
@@ -80,7 +75,7 @@ Notice
    * some ISPs
    * some company firewalls
    * some school firewalls
-   * some browers (will fix it later)
+   * some browers (will be fixed later)
 
 Special thanks to
 -----------------
