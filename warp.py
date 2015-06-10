@@ -29,8 +29,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import sys
-if sys.hexversion < 0x3040000:
-    print('Error: You need python 3.4.0 or above. exit.')
+if sys.version_info < (3, 4):
+    print('Error: You need python 3.4.0 or above.')
     exit(1)
 
 from argparse import ArgumentParser
@@ -235,7 +235,7 @@ def process_warp(client_reader, client_writer):
 
 
 @asyncio.coroutine
-def start_warp_server(host, port):
+def start_warp_server(host, port, *, loop = None):
     try:
         yield from asyncio.start_server(accept_client, host=host, port=port)
     except error as e:
