@@ -43,11 +43,9 @@ import random
 import re
 
 
-REGEX_HOST = re.compile(r'(.+?):([0-9]{1,5})')
-REGEX_CONTENT_LENGTH = re.compile(r'\r\nContent-Length: ([0-9]+)\r\n')
-REGEX_PROXY_CONNECTION = re.compile(r'\r\nProxy-Connection: (.+)\r\n')
-REGEX_CONNECTION = re.compile(r'\r\nConnection: (.+)\r\n')
-REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER = re.compile(r'\r\nUser-Agent: .*(Firefox|Opera).+\r\n')
+REGEX_HOST           = re.compile(r'(.+?):([0-9]{1,5})')
+REGEX_CONTENT_LENGTH = re.compile(r'\r\nContent-Length: ([0-9]+)\r\n', re.IGNORECASE)
+REGEX_CONNECTION     = re.compile(r'\r\nConnection: (.+)\r\n', re.IGNORECASE)
 
 clients = {}
 
@@ -107,12 +105,6 @@ def process_warp(client_reader, client_writer):
         logger.debug('[%s] !!! Task reject (empty request)' % ident)
         return
 
-    m1 = REGEX_PROXY_CONNECTION.search(header)
-    m2 = REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER.search(header)
-    if not m1 and not m2:
-        logger.debug('[%s] !!! Task reject (no Proxy-Connection header)' % ident)
-        return
-
     req = header.split('\r\n')[:-1]
     if len(req) < 4:
         logger.debug('[%s] !!! Task reject (invalid request)' % ident)
@@ -120,7 +112,8 @@ def process_warp(client_reader, client_writer):
     head = req[0].split(' ')
     if head[0] == 'CONNECT': # https proxy
         try:
-            logger.info('%sBYPASSING <%s %s> (SSL connection)' % ('[%s] ' % ident if verbose >= 1 else '', head[0], head[1]))
+            logger.info('%sBYPASSING <%s %s> (SSL connection)' % 
+                ('[%s] ' % ident if verbose >= 1 else '', head[0], head[1]))
             m = REGEX_HOST.search(head[1])
             host = m.group(1)
             port = int(m.group(2))
@@ -155,14 +148,15 @@ def process_warp(client_reader, client_writer):
         else:
             headerName, headerValue = headerNameAndValue[0], None
 
-        if headerName == "Host":
+        if headerName.lower() == "host":
             phost = headerValue
-        elif headerName == "Connection":
+        elif headerName.lower() == "connection":
             if headerValue.lower() in ('keep-alive', 'persist'):
-                sreq.append("Connection: close")    # current version of this program does not support the HTTP keep-alive feature
+                # current version of this program does not support the HTTP keep-alive feature
+                sreq.append("Connection: close")    
             else:
                 sreq.append(line)
-        elif headerName != 'Proxy-Connection':
+        elif headerName.lower() != 'proxy-connection':
             sreq.append(line)
             if len(line) == 0 and sreqHeaderEndIndex == 0:
                 sreqHeaderEndIndex = len(sreq) - 1
@@ -199,8 +193,8 @@ def process_warp(client_reader, client_writer):
             def generate_rndstrs(strings, length):
                 return ''.join(random.choice(strings) for _ in range(length))
             import string
-            return ['X-%s: %s\r\n' % (generate_rndstrs(string.ascii_uppercase, 16), generate_rndstrs(string.ascii_letters + string.digits, 128))
-                    for _ in range(32)]
+            return ['X-%s: %s\r\n' % (generate_rndstrs(string.ascii_uppercase, 16), 
+                generate_rndstrs(string.ascii_letters + string.digits, 128)) for _ in range(32)]
 
         req_writer.writelines(list(map(lambda x: x.encode(), generate_dummyheaders())))
         yield from req_writer.drain()
