@@ -6,7 +6,9 @@ Simple http proxy made in python 3.4
 This is proof-of-concept code.
 
 The main purpose of WARP is bypassing http://warning.or.kr/, which is a Deep Packet Inspection that operated by Korea Government.
+
 For more information, please see https://en.wikipedia.org/wiki/Internet_censorship_in_South_Korea
+
 You should run this proxy in your local computer.
 
 
