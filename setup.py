@@ -1,5 +1,3 @@
-from __future__ import with_statement
-
 try:
     from setuptools import setup
 except ImportError:
@@ -7,17 +5,16 @@ except ImportError:
 
 
 def readme():
-    with open('README.rst') as f:
+    with open('README.rst', encoding = 'utf-8') as f:
         return f.read()
 
 
 setup(
     name='warp-proxy',
-    version='0.1.1',
+    version='0.2.0',
     description='Simple http transparent proxy made in Python 3.4',
     long_description=readme(),
     url='https://github.com/devunt/warp',
-    download_url='https://github.com/devunt/warp/tarball/0.1.1',
     author='JuneHyeon Bae',
     author_email='devunt' '@' 'gmail.com',
     license='MIT License',

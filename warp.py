@@ -1,7 +1,6 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 
-VERSION = "v0.1.1 (poc code)"
+VERSION = "v0.2.0"
 
 """
 Copyright (c) 2013 devunt
@@ -29,8 +28,8 @@ OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import sys
-if sys.hexversion < 0x3040000:
-    print('Error: You need python 3.4.0 or above. exit.')
+if sys.version_info < (3, 4):
+    print('Error: You need python 3.4.0 or above.')
     exit(1)
 
 from argparse import ArgumentParser
@@ -40,14 +39,13 @@ from traceback import print_exc
 import asyncio
 import logging
 import random
+import functools
 import re
 
 
-REGEX_HOST = re.compile(r'(.+?):([0-9]{1,5})')
-REGEX_CONTENT_LENGTH = re.compile(r'\r\nContent-Length: ([0-9]+)\r\n')
-REGEX_PROXY_CONNECTION = re.compile(r'\r\nProxy-Connection: (.+)\r\n')
-REGEX_CONNECTION = re.compile(r'\r\nConnection: (.+)\r\n')
-REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER = re.compile(r'\r\nUser-Agent: .*(Firefox|Opera).+\r\n')
+REGEX_HOST           = re.compile(r'(.+?):([0-9]{1,5})')
+REGEX_CONTENT_LENGTH = re.compile(r'\r\nContent-Length: ([0-9]+)\r\n', re.IGNORECASE)
+REGEX_CONNECTION     = re.compile(r'\r\nConnection: (.+)\r\n', re.IGNORECASE)
 
 clients = {}
 
@@ -57,9 +55,9 @@ logger = logging.getLogger('warp')
 verbose = 0
 
 
-def accept_client(client_reader, client_writer):
+def accept_client(client_reader, client_writer, *, loop=None):
     ident = hex(id(client_reader))[-6:]
-    task = asyncio.async(process_warp(client_reader, client_writer))
+    task = asyncio.async(process_warp(client_reader, client_writer, loop=loop), loop=loop)
     clients[task] = (client_reader, client_writer)
     started_time = time()
 
@@ -73,7 +71,7 @@ def accept_client(client_reader, client_writer):
 
 
 @asyncio.coroutine
-def process_warp(client_reader, client_writer):
+def process_warp(client_reader, client_writer, *, loop=None):
     ident = str(hex(id(client_reader)))[-6:]
     header = ''
     payload = b''
@@ -86,7 +84,7 @@ def process_warp(client_reader, client_writer):
                 if len(header) == 0 and recvRetry < RECV_MAX_RETRY:
                     # handle the case when the client make connection but sending data is delayed for some reasons
                     recvRetry += 1
-                    yield from asyncio.sleep(0.2)
+                    yield from asyncio.sleep(0.2, loop=loop)
                     continue
                 else:
                     break
@@ -107,12 +105,6 @@ def process_warp(client_reader, client_writer):
         logger.debug('[%s] !!! Task reject (empty request)' % ident)
         return
 
-    m1 = REGEX_PROXY_CONNECTION.search(header)
-    m2 = REGEX_USER_AGENTS_WITHOUT_PROXY_CONNECTION_HEADER.search(header)
-    if not m1 and not m2:
-        logger.debug('[%s] !!! Task reject (no Proxy-Connection header)' % ident)
-        return
-
     req = header.split('\r\n')[:-1]
     if len(req) < 4:
         logger.debug('[%s] !!! Task reject (invalid request)' % ident)
@@ -120,11 +112,12 @@ def process_warp(client_reader, client_writer):
     head = req[0].split(' ')
     if head[0] == 'CONNECT': # https proxy
         try:
-            logger.info('%sBYPASSING <%s %s> (SSL connection)' % ('[%s] ' % ident if verbose >= 1 else '', head[0], head[1]))
+            logger.info('%sBYPASSING <%s %s> (SSL connection)' % 
+                ('[%s] ' % ident if verbose >= 1 else '', head[0], head[1]))
             m = REGEX_HOST.search(head[1])
             host = m.group(1)
             port = int(m.group(2))
-            req_reader, req_writer = yield from asyncio.open_connection(host, port, ssl=False)
+            req_reader, req_writer = yield from asyncio.open_connection(host, port, ssl=False, loop=loop)
             client_writer.write(b'HTTP/1.1 200 Connection established\r\n\r\n')
             @asyncio.coroutine
             def relay_stream(reader, writer):
@@ -137,10 +130,10 @@ def process_warp(client_reader, client_writer):
                 except:
                     print_exc()
             tasks = [
-                asyncio.async(relay_stream(client_reader, req_writer)),
-                asyncio.async(relay_stream(req_reader, client_writer)),
+                asyncio.async(relay_stream(client_reader, req_writer), loop=loop),
+                asyncio.async(relay_stream(req_reader, client_writer), loop=loop),
             ]
-            yield from asyncio.wait(tasks)
+            yield from asyncio.wait(tasks, loop=loop)
         except:
             print_exc()
         finally:
@@ -155,14 +148,15 @@ def process_warp(client_reader, client_writer):
         else:
             headerName, headerValue = headerNameAndValue[0], None
 
-        if headerName == "Host":
+        if headerName.lower() == "host":
             phost = headerValue
-        elif headerName == "Connection":
+        elif headerName.lower() == "connection":
             if headerValue.lower() in ('keep-alive', 'persist'):
-                sreq.append("Connection: close")    # current version of this program does not support the HTTP keep-alive feature
+                # current version of this program does not support the HTTP keep-alive feature
+                sreq.append("Connection: close")    
             else:
                 sreq.append(line)
-        elif headerName != 'Proxy-Connection':
+        elif headerName.lower() != 'proxy-connection':
             sreq.append(line)
             if len(line) == 0 and sreqHeaderEndIndex == 0:
                 sreqHeaderEndIndex = len(sreq) - 1
@@ -190,17 +184,17 @@ def process_warp(client_reader, client_writer):
         port = 80
 
     try:
-        req_reader, req_writer = yield from asyncio.open_connection(host, port, flags=TCP_NODELAY)
+        req_reader, req_writer = yield from asyncio.open_connection(host, port, flags=TCP_NODELAY, loop=loop)
         req_writer.write(('%s\r\n' % new_head).encode())
         yield from req_writer.drain()
-        yield from asyncio.sleep(0.2)
+        yield from asyncio.sleep(0.2, loop=loop)
 
         def generate_dummyheaders():
             def generate_rndstrs(strings, length):
                 return ''.join(random.choice(strings) for _ in range(length))
             import string
-            return ['X-%s: %s\r\n' % (generate_rndstrs(string.ascii_uppercase, 16), generate_rndstrs(string.ascii_letters + string.digits, 128))
-                    for _ in range(32)]
+            return ['X-%s: %s\r\n' % (generate_rndstrs(string.ascii_uppercase, 16), 
+                generate_rndstrs(string.ascii_letters + string.digits, 128)) for _ in range(32)]
 
         req_writer.writelines(list(map(lambda x: x.encode(), generate_dummyheaders())))
         yield from req_writer.drain()
@@ -214,7 +208,7 @@ def process_warp(client_reader, client_writer):
                 phost = phost[i:]
                 i = random.randrange(2, 5)
         for delay, c in feed_phost(phost):
-            yield from asyncio.sleep(delay/10.0)
+            yield from asyncio.sleep(delay / 10.0, loop=loop)
             req_writer.write(c.encode())
             yield from req_writer.drain()
         req_writer.write(b'\r\n')
@@ -241,9 +235,10 @@ def process_warp(client_reader, client_writer):
 
 
 @asyncio.coroutine
-def start_warp_server(host, port):
+def start_warp_server(host, port, *, loop = None):
     try:
-        yield from asyncio.start_server(accept_client, host=host, port=port)
+        accept = functools.partial(accept_client, loop=loop)
+        yield from asyncio.start_server(accept, host=host, port=port, loop=loop)
     except error as e:
         logger.critical('!!! Fail to bind server at [%s:%d]: %s' % (host, port, e.args[1]))
         return 1
