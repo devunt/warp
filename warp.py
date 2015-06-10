@@ -1,7 +1,6 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
-VERSION = "v0.1.1 (poc code)"
+VERSION = "v0.2.0 (poc code)"
 
 """
 Copyright (c) 2013 devunt
