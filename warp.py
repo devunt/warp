@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-VERSION = "v0.2.0 (poc code)"
+VERSION = "v0.2.0"
 
 """
 Copyright (c) 2013 devunt
