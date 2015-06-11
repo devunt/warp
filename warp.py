@@ -239,8 +239,8 @@ def start_warp_server(host, port, *, loop = None):
     try:
         accept = functools.partial(accept_client, loop=loop)
         yield from asyncio.start_server(accept, host=host, port=port, loop=loop)
-    except error as e:
-        logger.critical('!!! Fail to bind server at [%s:%d]: %s' % (host, port, e.args[1]))
+    except OSError as ex:
+        logger.critical('!!! Fail to bind server at [%s:%d]: %s' % (host, port, ex.args[1]))
         return 1
     logger.info('Server bound at [%s:%d].' % (host, port))
 
