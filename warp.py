@@ -238,11 +238,13 @@ def process_warp(client_reader, client_writer, *, loop=None):
 def start_warp_server(host, port, *, loop = None):
     try:
         accept = functools.partial(accept_client, loop=loop)
-        yield from asyncio.start_server(accept, host=host, port=port, loop=loop)
+        server = yield from asyncio.start_server(accept, host=host, port=port, loop=loop) 
     except OSError as ex:
-        logger.critical('!!! Fail to bind server at [%s:%d]: %s' % (host, port, ex.args[1]))
-        return 1
-    logger.info('Server bound at [%s:%d].' % (host, port))
+        logger.critical('!!! Failed to bind server at [%s:%d]: %s' % (host, port, ex.args[1]))
+        raise
+    else:
+        logger.info('Server bound at [%s:%d].' % (host, port))
+        return server
 
 
 def main():
@@ -271,8 +273,10 @@ def main():
     verbose = args.verbose
     loop = asyncio.get_event_loop()
     try:
-        asyncio.async(start_warp_server(args.host, args.port))
+        loop.run_until_complete(start_warp_server(args.host, args.port))
         loop.run_forever()
+    except OSError:
+        pass
     except KeyboardInterrupt:
         print('bye')
     finally:
